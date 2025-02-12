@@ -78,56 +78,6 @@ def train_with_no_K(lr: float, epochs: int, model_filename: str, loss_filename: 
 
     print("Model and loss history saved successfully.")
 
-def train_with_K(lr: float, epochs: int, model_filename: str, loss_filename: str):
-    # Upload the train dataset
-    train_path = r'C:\Users\aguia\OneDrive\Desktop\Physics_I_anno\Computational_Material_Physics\Project\Final\TrainSet\TrainSet_K.pkl'
-    with open(train_path, "rb") as file:
-        train_set = pickle.load(file)
-    
-    # Check on the dimensionality
-    if train_set[0].x.size(1) is not train_set[67].x.size(1):
-        raise ValueError('Something wrong with the number of node features')
-    
-    sample_batch = train_set[0]
-    in_channels = sample_batch.x.size(1)
-    # Defining the model
-    model = CrystalGAT_with_K(hidden_dim=32, num_heads=2, in_channels=in_channels)
-    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
-    criterion = torch.nn.MSELoss()
-
-    # TRAINING LOOP
-    loss_hist = []
-    update = epochs / 100
-    print("\n\nTraining the model: ")
-    for epoch in range(epochs):
-        model.train()
-        loss = 0
-
-        for batch in train_set:
-            optimizer.zero_grad()
-            pred = model(batch.x, batch.edge_index, batch.batch, batch.band_energies, batch.crystal_params, batch.k_points)
-            loss = criterion(pred, batch.y.unsqueeze(1))
-            loss.backward()
-            optimizer.step()
-            loss = loss.item()
-
-        loss_hist.append(loss)
-        if epoch >= update:
-            print(f"Trainied at {int(100 * update / epochs)}%")
-            update += epochs / 100
-
-    # Save the weights of the model
-    model_path = r'C:\Users\aguia\OneDrive\Desktop\Physics_I_anno\Computational_Material_Physics\Project\Final\TrainedModels\WITH_K'
-    torch.save(model.state_dict(), model_path + model_filename + '.pth')
-
-    # Save the loss history
-    loss_path = r'C:\Users\aguia\OneDrive\Desktop\Physics_I_anno\Computational_Material_Physics\Project\Final\Results\Losses\WITH_K'
-    with open(loss_path + loss_filename + '.txt', "w") as file:
-        for value in loss_hist:
-            file.write(f"{value}\n")
-
-    print("Model and loss history saved successfully.")
-
 def train_SC(lr: float, model_filename: str, loss_filename: str):
     # Upload the train dataset
     train_path = r'C:\Users\aguia\OneDrive\Desktop\Physics_I_anno\Computational_Material_Physics\Project\Final\TrainSet\TrainSet_interpol.pkl'
@@ -262,5 +212,4 @@ def train_and_test(hidden_dimentions: int, heads: int, lr: float, epochs: int, m
 if __name__ == '__main__':
     # CHOOSE BETWEEN ONE OF THESE TWO AND COMMENT THE OTHER!!!
     # train_SC(1e-5, r'\Model9_SC(lr=1e-5, b=50)', r'\Model9_SC(lr=1e-5, b=50)')
-    # train_with_K(1e-6, 3000, r'\Model4_K(ep=3000, lr=1e-6)', r'\Model4_K(ep=3000, lr=1e-6)')
     train_and_test(16, 2, 5*1e-6, 3000, r'\Model_4(16, 2, -7, 3000)')
